@@ -257,6 +257,94 @@ function addStaticData($conn) {
     echo "Static data inserted successfully!";
 }
 
+function feecollectiontype($conn) {
+
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    if (!$conn->query("TRUNCATE TABLE feecollectiontype")) {
+        die("Error truncating the table: " . $conn->error);
+    }
+
+    $sql = "SELECT DISTINCT modu.`Module Name`, br.`branch_id`
+              FROM branches br
+              CROSS JOIN (
+               SELECT DISTINCT `Module Name`
+                  FROM module
+             ) modu
+             WHERE modu.`Module Name` != ''
+              ORDER BY br.`branch_name`, modu.`Module Name`;";
+
+    $result = $conn->query($sql);
+
+    if ($result) {
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $ModuleName = $row['Module Name'];
+                $branch_id = $row['branch_id'];
+
+                $insertSql = "INSERT INTO feecollectiontype(Collection_head,Collection_desc,Br_id) VALUES ('$ModuleName','$ModuleName', '$branch_id')";
+
+                if ($conn->query($insertSql) === TRUE) {
+                    echo "Record inserted successfully for feecollectiontype: " . $ModuleName . " with Branch ID: " . $branch_id . "<br>";
+                } else {
+                    echo "Error inserting record: " . $conn->error . "<br>";
+                }
+            }
+        } else {
+            echo "No records found.";
+        }
+    } else {
+        echo "Error executing query: " . $conn->error;
+    }
+}
+
+
+
+function feetypes($conn) {
+
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    if (!$conn->query("TRUNCATE TABLE feetypes")) {
+        die("Error truncating the table: " . $conn->error);
+    }
+
+    $sql = "SELECT DISTINCT temp.`Fee Head`, br.`branch_id`
+    FROM branches br
+    CROSS JOIN (
+        SELECT DISTINCT `Fee Head`
+        FROM temporary_completedata
+    ) temp
+    WHERE temp.`Fee Head` != ''
+    ORDER BY br.`branch_name`, temp.`Fee Head`;";
+
+    $result = $conn->query($sql);
+     $count=1;
+    if ($result) {
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $FeeHead = $row['Fee Head'];
+                $branch_id = $row['branch_id'];
+
+                $insertSql = "INSERT INTO feetypes(`Fee_category`, `F_name`, `Collection_id`, `Br_id`, `Seq_id`, `Fee_type_ledger`, `Fee_headtype`) VALUES ('$branch_id ','$FeeHead', '$branch_id','$branch_id','$count','$FeeHead','$branch_id')";
+
+                $count++;
+                if ($conn->query($insertSql) === TRUE) {
+                    echo "Record inserted successfully for feetypes: " .  $FeeHead . " with Branch ID: " . $branch_id . "<br>";
+                } else {
+                    echo "Error inserting record: " . $conn->error . "<br>";
+                }
+            }
+        } else {
+            echo "No records found.";
+        }
+    } else {
+        echo "Error executing query: " . $conn->error;
+    }
+}
 
 
 // Check if the form is submitted
@@ -280,10 +368,12 @@ if (isset($_POST["submit"]))
     // Create a database connection
     $conn = new mysqli($servername, $username, $password, $dbname);
 
-        importCSV($file_path,$conn);
-         segregate($conn);
-         addStaticData($conn);
-        feecategory($conn);
+        // importCSV($file_path,$conn);
+        //  segregate($conn);
+        //  addStaticData($conn);
+        // feecategory($conn);
+        // feecollectiontype($conn);
+        feetypes($conn);
     // $conn->close();
     } else {
         echo "Error uploading the CSV file.";
